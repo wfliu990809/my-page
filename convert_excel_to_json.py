@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-数据转换脚本：读取所有Excel文件，提取日期和保费数据
+数据转换脚本：读取所有Excel文件，提取日期和保费数据（支持增量更新）
 """
 
 import pandas as pd
@@ -10,6 +10,34 @@ import os
 import re
 import glob
 from datetime import datetime
+import hashlib
+
+
+# 缓存文件路径
+CACHE_FILE = 'data_cache.json'
+
+def get_file_hash(filepath):
+    """计算文件的MD5哈希值"""
+    hash_md5 = hashlib.md5()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+def load_cache():
+    """加载缓存数据"""
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_cache(cache_data):
+    """保存缓存数据"""
+    with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(cache_data, f, ensure_ascii=False, indent=2)
 
 
 def extract_end_date_from_b1(filepath):
@@ -132,7 +160,7 @@ def update_html_embedded_data(json_data):
 
 
 def main():
-    """主函数"""
+    """主函数（支持增量更新）"""
     
     # 数据文件夹路径
     data_dir = r'D:\程序库\业务平台分析\源数据'
@@ -143,6 +171,9 @@ def main():
         print('请创建该文件夹并将Excel文件放入其中')
         return
     
+    # 加载缓存
+    cache = load_cache()
+    
     # 扫描所有Excel文件
     excel_files = []
     for pattern in ['*.xlsx', '*.xls']:
@@ -151,7 +182,34 @@ def main():
     # 过滤掉生成的文件
     excel_files = [f for f in excel_files if not f.startswith('~')]
     
+    # 检查哪些文件需要重新处理
+    files_to_process = []
+    cached_count = 0
+    
+    for filepath in excel_files:
+        filename = os.path.basename(filepath)
+        mtime = os.path.getmtime(filepath)
+        file_hash = get_file_hash(filepath)
+        
+        # 检查缓存中是否存在且未修改
+        if filename in cache:
+            if cache[filename].get('hash') == file_hash and cache[filename].get('mtime') == mtime:
+                cached_count += 1
+                continue
+        
+        files_to_process.append(filepath)
+    
     print(f"发现 {len(excel_files)} 个Excel文件")
+    print(f"  - 新增/修改: {len(files_to_process)} 个")
+    print(f"  - 缓存命中: {cached_count} 个")
+    
+    # 清理已删除文件的缓存
+    current_filenames = {os.path.basename(f) for f in excel_files}
+    removed_files = [f for f in cache.keys() if f not in current_filenames]
+    if removed_files:
+        print(f"  - 删除缓存: {len(removed_files)} 个")
+        for f in removed_files:
+            del cache[f]
     
     # 数据结构：按年份和日期存储
     data_by_year = {
@@ -162,7 +220,27 @@ def main():
     all_categories = set()
     all_institutions = set()
     
-    for filepath in excel_files:
+    # 首先加载缓存中的数据
+    for filename, cached_info in cache.items():
+        if 'data' in cached_info:
+            year = cached_info['data']['year']
+            end_date = cached_info['data']['date']
+            records = cached_info['data']['records']
+            total_premium = cached_info['data']['total_premium']
+            
+            data_by_year[year][end_date] = {
+                'date': end_date,
+                'filename': filename,
+                'records': records,
+                'total_premium': total_premium
+            }
+            
+            for r in records:
+                all_categories.add(r['category'])
+                all_institutions.add(r['institution'])
+    
+    # 处理新增/修改的文件
+    for filepath in files_to_process:
         filename = os.path.basename(filepath)
         print(f"\n处理: {filename}")
         
@@ -206,6 +284,20 @@ def main():
         }
         
         print(f"  - 成功读取 {len(records)} 条记录，累计保费: {total_premium:,.2f}")
+        
+        # 更新缓存
+        mtime = os.path.getmtime(filepath)
+        file_hash = get_file_hash(filepath)
+        cache[filename] = {
+            'mtime': mtime,
+            'hash': file_hash,
+            'data': {
+                'year': year,
+                'date': end_date,
+                'records': records,
+                'total_premium': total_premium
+            }
+        }
     
     # 准备图表数据：按日期排序的时间序列
     chart_data = {
@@ -245,6 +337,10 @@ def main():
     # 更新HTML中的内嵌数据
     print("\n正在更新HTML文件...")
     update_html_embedded_data(result)
+    
+    # 保存缓存
+    save_cache(cache)
+    print(f"  - 已更新缓存文件: {CACHE_FILE}")
     
     print(f"\n[OK] 数据转换完成！")
     print(f"  - JSON文件: data.json")
