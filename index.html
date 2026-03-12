@@ -1889,18 +1889,15 @@ function updateInstitutionStackChart() {
                     borderWidth: 1,
                     datalabels: {
                         display: function(context) {
-                            // 只有当值大于0.5万时才显示（避免太挤）
-                            return context.dataset.data[context.dataIndex] >= 0.5;
+                            return context.dataset.data[context.dataIndex] > 0;
                         },
-                        anchor: 'center',
-                        align: 'center',
-                        color: '#333',
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 2,
+                        color: '#FF6B6B',
                         font: { size: 10, weight: 'bold' },
-                        backgroundColor: 'rgba(220,220,220,0.9)',
-                        borderRadius: 3,
-                        padding: { top: 1, bottom: 1, left: 3, right: 3 },
                         formatter: function(value) {
-                            return value >= 0.5 ? value.toFixed(2) + '万' : '';
+                            return value > 0 ? value.toFixed(2) : '';
                         }
                     }
                 },
@@ -1912,17 +1909,15 @@ function updateInstitutionStackChart() {
                     borderWidth: 1,
                     datalabels: {
                         display: function(context) {
-                            return context.dataset.data[context.dataIndex] >= 0.5;
+                            return context.dataset.data[context.dataIndex] > 0;
                         },
-                        anchor: 'center',
-                        align: 'center',
-                        color: '#333',
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 2,
+                        color: '#4A90E2',
                         font: { size: 10, weight: 'bold' },
-                        backgroundColor: 'rgba(220,220,220,0.9)',
-                        borderRadius: 3,
-                        padding: { top: 1, bottom: 1, left: 3, right: 3 },
                         formatter: function(value) {
-                            return value >= 0.5 ? value.toFixed(2) + '万' : '';
+                            return value > 0 ? value.toFixed(2) : '';
                         }
                     }
                 },
@@ -1934,17 +1929,15 @@ function updateInstitutionStackChart() {
                     borderWidth: 1,
                     datalabels: {
                         display: function(context) {
-                            return context.dataset.data[context.dataIndex] >= 0.5;
+                            return context.dataset.data[context.dataIndex] > 0;
                         },
-                        anchor: 'center',
-                        align: 'center',
-                        color: '#333',
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 2,
+                        color: '#28a745',
                         font: { size: 10, weight: 'bold' },
-                        backgroundColor: 'rgba(220,220,220,0.9)',
-                        borderRadius: 3,
-                        padding: { top: 1, bottom: 1, left: 3, right: 3 },
                         formatter: function(value) {
-                            return value >= 0.5 ? value.toFixed(2) + '万' : '';
+                            return value > 0 ? value.toFixed(2) : '';
                         }
                     }
                 },
@@ -1958,10 +1951,12 @@ function updateInstitutionStackChart() {
                         display: true,
                         anchor: 'end',
                         align: 'top',
-                        offset: 8,
+                        offset: 15,
                         color: '#333',
                         font: { size: 11, weight: 'bold' },
-                        backgroundColor: 'rgba(200,200,200,0.95)',
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        borderColor: '#999',
+                        borderWidth: 1,
                         borderRadius: 4,
                         padding: { top: 2, bottom: 2, left: 5, right: 5 },
                         formatter: function(value) {
@@ -2028,19 +2023,16 @@ function updateInstitutionStackChart() {
             },
             scales: {
                 x: {
-                    stacked: true,
+                    stacked: false,
                     grid: { display: false },
                     ticks: {
                         font: { size: 11 },
                         maxRotation: 45,
                         minRotation: 30
-                    },
-                    // 让柱子稍细一点，间距更大，减少标签重叠
-                    barPercentage: 0.7,
-                    categoryPercentage: 0.8
+                    }
                 },
                 y: {
-                    stacked: true,
+                    stacked: false,
                     beginAtZero: true,
                     title: {
                         display: true,
