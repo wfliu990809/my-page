@@ -456,8 +456,7 @@
             </div>
 
             <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; padding-right: 5px;">
-                <!-- 提示：想重置访问计数，将下面 v1 改为 v2, v3... -->
-                <span style="color: #666; font-size: 13px;">👁️ 本版访问：<img src="https://visitor-badge.laobi.icu/badge?page_id=gardenstudio-ts-github-my-page-v1" alt="访问次数" style="vertical-align: middle; margin-left: 5px;"></span>
+                <span style="color: #666; font-size: 13px;">👁️ 今日访问：<img id="dailyVisitBadge" src="" alt="访问次数" style="vertical-align: middle; margin-left: 5px;"></span>
             </div>
 
             <div class="filters">
@@ -2438,6 +2437,19 @@ document.getElementById('institutionSelect').addEventListener('change', function
     updateInstitutionTable();
     updateStatsCards();
 });
+
+// ============================================
+// 设置今日访问计数徽章（每天自动重置）
+// ============================================
+(function setDailyVisitBadge() {
+    const today = new Date();
+    const dateStr = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+    const badgeUrl = `https://visitor-badge.laobi.icu/badge?page_id=gardenstudio-ts-github-my-page-${dateStr}`;
+    const badgeImg = document.getElementById('dailyVisitBadge');
+    if (badgeImg) {
+        badgeImg.src = badgeUrl;
+    }
+})();
 </script>
 </body>
 </html>
